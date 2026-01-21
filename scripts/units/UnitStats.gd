@@ -6,7 +6,7 @@ class_name UnitStats
 
 @export_group("Identity")
 @export var unit_name: String = "Unnamed"
-@export var unit_class: Constants.UnitClass = Constants.UnitClass.KNIGHT
+@export var unit_class: int = 0  # Constants.UnitClass.KNIGHT
 @export var level: int = 1
 @export var experience: int = 0
 @export var experience_to_next_level: int = 100
@@ -28,7 +28,7 @@ class_name UnitStats
 
 @export_group("Combat")
 @export var attack_range: int = 1  # Melee = 1, Ranged = 2+
-@export var weapon_type: Constants.WeaponType = Constants.WeaponType.SWORD
+@export var weapon_type: int = 0  # Constants.WeaponType.SWORD
 @export var crit_chance: int = 5  # Base critical hit chance percentage
 @export var dodge_chance: int = 5  # Base dodge chance percentage
 

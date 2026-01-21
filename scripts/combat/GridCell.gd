@@ -4,8 +4,8 @@ class_name GridCell
 ## Represents a single cell in the tactical combat grid
 ## Handles visual feedback, terrain properties, and occupancy
 
-@export var terrain_type: Constants.TerrainType = Constants.TerrainType.PLAINS
-@export var movement_cost: int = Constants.MOVEMENT_COST_DEFAULT
+@export var terrain_type: int = 0  # Constants.TerrainType.PLAINS
+@export var movement_cost: int = 1  # Constants.MOVEMENT_COST_DEFAULT
 @export var defense_bonus: int = 0
 @export var avoid_bonus: int = 0
 
@@ -16,11 +16,11 @@ var is_highlighted: bool = false
 var highlight_color: Color = Color.WHITE
 
 @onready var sprite: Sprite2D = $Sprite2D
-@onready var highlight: ColorRect = $Highlight
+@onready var highlight_rect: ColorRect = $Highlight
 
 func _ready() -> void:
-	highlight.visible = false
-	highlight.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	highlight_rect.visible = false
+	highlight_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_setup_terrain_properties()
 
 ## Initialize cell with grid position
@@ -30,7 +30,7 @@ func initialize(grid_pos: Vector2i) -> void:
 	name = "Cell_%d_%d" % [grid_pos.x, grid_pos.y]
 
 ## Set terrain type and update properties accordingly
-func set_terrain(new_terrain: Constants.TerrainType) -> void:
+func set_terrain(new_terrain: int) -> void:
 	terrain_type = new_terrain
 	_setup_terrain_properties()
 	_update_visual()
@@ -106,15 +106,15 @@ func is_passable() -> bool:
 func highlight(color: Color) -> void:
 	is_highlighted = true
 	highlight_color = color
-	if highlight:
-		highlight.color = color
-		highlight.visible = true
+	if highlight_rect:
+		highlight_rect.color = color
+		highlight_rect.visible = true
 
 ## Remove highlight from this cell
 func unhighlight() -> void:
 	is_highlighted = false
-	if highlight:
-		highlight.visible = false
+	if highlight_rect:
+		highlight_rect.visible = false
 
 ## Handle mouse hover
 func _on_mouse_entered() -> void:

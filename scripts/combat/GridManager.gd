@@ -177,7 +177,7 @@ func calculate_movement_range(unit: Unit) -> Array[Vector2i]:
 	return reachable_cells
 
 ## Check if unit can traverse specific terrain
-func can_unit_traverse_terrain(unit: Unit, terrain: Constants.TerrainType) -> bool:
+func can_unit_traverse_terrain(unit: Unit, terrain: int) -> bool:
 	match terrain:
 		Constants.TerrainType.FOREST:
 			return unit.stats.can_traverse_forest

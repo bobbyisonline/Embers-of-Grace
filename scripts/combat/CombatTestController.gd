@@ -41,7 +41,7 @@ func _spawn_test_units() -> void:
 	_create_enemy_unit("Raider", Vector2i(11, 5), Constants.WeaponType.LANCE)
 
 ## Create a player-controlled unit
-func _create_player_unit(unit_name: String, pos: Vector2i, weapon: Constants.WeaponType, has_grace: bool = false) -> Unit:
+func _create_player_unit(unit_name: String, pos: Vector2i, weapon: int, has_grace: bool = false) -> Unit:
 	var unit = player_unit_scene.instantiate() as Unit
 
 	# Create stats
@@ -76,7 +76,7 @@ func _create_player_unit(unit_name: String, pos: Vector2i, weapon: Constants.Wea
 	return unit
 
 ## Create an enemy unit
-func _create_enemy_unit(unit_name: String, pos: Vector2i, weapon: Constants.WeaponType) -> Unit:
+func _create_enemy_unit(unit_name: String, pos: Vector2i, weapon: int) -> Unit:
 	var unit = player_unit_scene.instantiate() as Unit
 
 	# Create stats
