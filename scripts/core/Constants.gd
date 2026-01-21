@@ -1,7 +1,7 @@
-extends Node
 class_name Constants
 
 ## Game-wide constants for Embers of Grace
+## This is a static constants class - do not instantiate
 
 # Grid Settings
 const GRID_CELL_SIZE: int = 64  # Size of each grid cell in pixels
