@@ -1,6 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://cell_scene_001"]
+[gd_scene load_steps=3 format=3 uid="uid://cell_scene_001"]
 
 [ext_resource type="Script" path="res://scripts/combat/GridCell.gd" id="1"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(64, 64)
 
 [node name="GridCell" type="Node2D"]
 script = ExtResource("1")
@@ -19,3 +22,4 @@ color = Color(1, 1, 1, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="InputArea"]
 position = Vector2(32, 32)
+shape = SubResource("RectangleShape2D_1")
