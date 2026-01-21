@@ -14,31 +14,42 @@ var player_units: Array[Unit] = []
 var enemy_units: Array[Unit] = []
 
 func _ready() -> void:
-	# Wait for grid to initialize
-	await grid_manager.grid_initialized
+	print("[CombatTest] Starting combat test scene")
+	# Wait one frame to ensure grid is ready
+	await get_tree().process_frame
+	print("[CombatTest] Grid should be ready, spawning units")
 
 	# Create test units
 	_spawn_test_units()
+	print("[CombatTest] Units spawned")
 
 	# Connect signals
 	combat_state.phase_changed.connect(_on_phase_changed)
 
 	# Start combat
 	combat_state.start_player_turn()
+	print("[CombatTest] Combat started")
 
 ## Spawn test units for prototyping
 func _spawn_test_units() -> void:
+	print("[CombatTest] Loading unit scene...")
 	# Load unit scene
 	if not player_unit_scene:
 		player_unit_scene = load("res://scenes/units/Unit.tscn")
+	print("[CombatTest] Unit scene loaded: ", player_unit_scene)
 
 	# Create player units
+	print("[CombatTest] Creating Aldric...")
 	_create_player_unit("Aldric", Vector2i(2, 4), Constants.WeaponType.SWORD)
+	print("[CombatTest] Creating Elara...")
 	_create_player_unit("Elara", Vector2i(3, 5), Constants.WeaponType.STAFF, true)
 
 	# Create enemy units
+	print("[CombatTest] Creating Brigand...")
 	_create_enemy_unit("Brigand", Vector2i(10, 4), Constants.WeaponType.AXE)
+	print("[CombatTest] Creating Raider...")
 	_create_enemy_unit("Raider", Vector2i(11, 5), Constants.WeaponType.LANCE)
+	print("[CombatTest] All units created!")
 
 ## Create a player-controlled unit
 func _create_player_unit(unit_name: String, pos: Vector2i, weapon: int, has_grace: bool = false) -> Unit:

@@ -72,11 +72,22 @@ func get_attack_range() -> Array[Vector2i]:
 ## Move unit to target position with animation
 func move_to(target_pos: Vector2i) -> void:
 	has_moved_this_turn = true
-	set_grid_position(target_pos)
 
-	if animation_player and animation_player.has_animation("move"):
-		animation_player.play("move")
-		await animation_player.animation_finished
+	# Calculate target world position
+	var target_world_pos = Vector2(
+		target_pos.x * Constants.GRID_CELL_SIZE,
+		target_pos.y * Constants.GRID_CELL_SIZE
+	)
+
+	# Smooth movement using Tween
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_IN_OUT)
+	tween.set_trans(Tween.TRANS_QUAD)
+	tween.tween_property(self, "position", target_world_pos, 0.3)
+	await tween.finished
+
+	# Update grid position after animation
+	grid_position = target_pos
 
 	action_completed.emit()
 
@@ -85,18 +96,35 @@ func attack(target: Unit) -> void:
 	if not target or not target.stats.is_alive():
 		return
 
+	# Store original position
+	var original_pos = position
+
+	# Calculate direction to target (move halfway)
+	var direction = (target.position - position).normalized()
+	var attack_pos = position + direction * (Constants.GRID_CELL_SIZE * 0.4)
+
+	# Attack animation: slide toward target
+	var tween = create_tween()
+	tween.set_ease(Tween.EASE_OUT)
+	tween.set_trans(Tween.TRANS_BACK)
+	tween.tween_property(self, "position", attack_pos, 0.15)
+	await tween.finished
+
+	# Deal damage
 	var damage = calculate_damage(target)
 	target.take_damage(damage)
 
 	attacked.emit(target)
 	EventBus.unit_attacked.emit(self, target, damage)
 
+	# Return to original position
+	var return_tween = create_tween()
+	return_tween.set_ease(Tween.EASE_IN)
+	return_tween.set_trans(Tween.TRANS_QUAD)
+	return_tween.tween_property(self, "position", original_pos, 0.15)
+	await return_tween.finished
+
 	has_acted_this_turn = true
-
-	if animation_player and animation_player.has_animation("attack"):
-		animation_player.play("attack")
-		await animation_player.animation_finished
-
 	action_completed.emit()
 
 ## Calculate damage dealt to target
@@ -150,6 +178,8 @@ func take_damage(amount: int) -> void:
 	if dodge_roll < stats.dodge_chance:
 		if Constants.DEBUG_MODE:
 			print("[Combat] %s dodged the attack!" % stats.unit_name)
+		# Show "MISS" text
+		_show_damage_text("MISS", Color.GRAY)
 		return
 
 	var died_from_damage = stats.take_damage(amount)
@@ -157,8 +187,11 @@ func take_damage(amount: int) -> void:
 	EventBus.unit_damaged.emit(self, amount, stats.current_hp)
 	update_health_bar()
 
-	if animation_player and animation_player.has_animation("hit"):
-		animation_player.play("hit")
+	# Hit flash and shake
+	_play_hit_effect()
+
+	# Show damage number
+	_show_damage_text(str(amount), Color.RED)
 
 	if died_from_damage:
 		die()
@@ -174,10 +207,15 @@ func die() -> void:
 	died.emit()
 	EventBus.unit_died.emit(self)
 
-	if animation_player and animation_player.has_animation("death"):
-		animation_player.play("death")
-		await animation_player.animation_finished
+	# Death animation: fade out and shrink
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(self, "modulate:a", 0.0, 0.5)
+	tween.tween_property(self, "scale", Vector2(0.5, 0.5), 0.5)
+	tween.set_ease(Tween.EASE_IN)
+	tween.set_trans(Tween.TRANS_BACK)
 
+	await tween.finished
 	queue_free()
 
 ## Reset turn state
@@ -214,12 +252,36 @@ func update_health_bar() -> void:
 ## Visual feedback for selection
 func select() -> void:
 	is_selected = true
+
+	# Create selection ring
+	var selection_ring = ColorRect.new()
+	selection_ring.name = "SelectionRing"
+	selection_ring.size = Vector2(Constants.GRID_CELL_SIZE + 8, Constants.GRID_CELL_SIZE + 8)
+	selection_ring.position = Vector2(-4, -4)
+	selection_ring.color = Color(1.0, 1.0, 0.5, 0.6)
+	selection_ring.z_index = -1
+	add_child(selection_ring)
+
+	# Pulsing animation
+	var tween = create_tween()
+	tween.set_loops()
+	tween.tween_property(selection_ring, "modulate:a", 0.3, 0.5)
+	tween.tween_property(selection_ring, "modulate:a", 0.8, 0.5)
+
+	# Brighten sprite
 	if sprite:
-		sprite.modulate = Color(1.2, 1.2, 1.2)
+		sprite.modulate = Color(1.3, 1.3, 1.3)
 
 ## Remove selection visual
 func deselect() -> void:
 	is_selected = false
+
+	# Remove selection ring
+	var ring = get_node_or_null("SelectionRing")
+	if ring:
+		ring.queue_free()
+
+	# Reset sprite color
 	if sprite:
 		sprite.modulate = Color.WHITE
 
@@ -227,3 +289,49 @@ func deselect() -> void:
 func _on_died() -> void:
 	if Constants.DEBUG_MODE:
 		print("[Unit] %s has died." % stats.unit_name)
+
+## Play hit flash and shake effect
+func _play_hit_effect() -> void:
+	if not sprite:
+		return
+
+	# Store original position and color
+	var original_pos = sprite.position
+	var original_color = sprite.modulate
+
+	# Flash red
+	sprite.modulate = Color(2.0, 0.5, 0.5)
+
+	# Shake effect
+	var tween = create_tween()
+	tween.set_parallel(true)
+
+	# Shake animation (quick left-right)
+	tween.tween_property(sprite, "position", original_pos + Vector2(3, 0), 0.05)
+	tween.chain().tween_property(sprite, "position", original_pos + Vector2(-3, 0), 0.05)
+	tween.chain().tween_property(sprite, "position", original_pos, 0.05)
+
+	# Fade back to normal color
+	tween.tween_property(sprite, "modulate", original_color, 0.2)
+
+## Show floating damage text
+func _show_damage_text(text: String, color: Color) -> void:
+	# Create label for damage number
+	var damage_label = Label.new()
+	damage_label.text = text
+	damage_label.modulate = color
+	damage_label.position = Vector2(Constants.GRID_CELL_SIZE / 2, Constants.GRID_CELL_SIZE / 4)
+
+	# Make text larger and bold
+	damage_label.add_theme_font_size_override("font_size", 20)
+
+	add_child(damage_label)
+
+	# Float upward and fade out
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(damage_label, "position", damage_label.position + Vector2(0, -40), 1.0)
+	tween.tween_property(damage_label, "modulate:a", 0.0, 1.0)
+
+	await tween.finished
+	damage_label.queue_free()

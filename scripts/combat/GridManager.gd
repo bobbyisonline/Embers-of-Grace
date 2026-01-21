@@ -19,6 +19,7 @@ func _ready() -> void:
 
 ## Create the grid cells
 func _create_grid() -> void:
+	print("[GridManager] Creating grid: %dx%d" % [grid_width, grid_height])
 	for x in range(grid_width):
 		for y in range(grid_height):
 			var cell_pos = Vector2i(x, y)
@@ -27,6 +28,7 @@ func _create_grid() -> void:
 			add_child(cell)
 
 	grid_initialized.emit()
+	print("[GridManager] Grid created with %d cells" % grid.size())
 	if Constants.DEBUG_MODE:
 		print("[GridManager] Grid initialized: %dx%d" % [grid_width, grid_height])
 
@@ -44,15 +46,26 @@ func _create_cell(cell_pos: Vector2i) -> GridCell:
 
 ## Setup default visuals for cells when no scene is provided
 func _setup_default_cell_visuals(cell: GridCell) -> void:
-	# Create sprite
+	# Create background ColorRect (more reliable than sprite)
+	var background = ColorRect.new()
+	background.name = "Background"
+	background.size = Vector2(Constants.GRID_CELL_SIZE - 2, Constants.GRID_CELL_SIZE - 2)
+	background.position = Vector2(1, 1)
+	background.color = Color(0.8, 0.75, 0.6)
+	cell.add_child(background)
+
+	# Create border
+	var border = ColorRect.new()
+	border.name = "Border"
+	border.size = Vector2(Constants.GRID_CELL_SIZE, Constants.GRID_CELL_SIZE)
+	border.color = Color(0.3, 0.3, 0.3)
+	border.z_index = -1
+	cell.add_child(border)
+
+	# Create sprite node for compatibility
 	var sprite = Sprite2D.new()
 	sprite.name = "Sprite2D"
-	# Create a simple colored square texture placeholder
-	var image = Image.create(Constants.GRID_CELL_SIZE - 2, Constants.GRID_CELL_SIZE - 2, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0.8, 0.8, 0.6))
-	sprite.texture = ImageTexture.create_from_image(image)
-	sprite.centered = false
-	sprite.position = Vector2(1, 1)
+	sprite.visible = false
 	cell.add_child(sprite)
 
 	# Create highlight rect
@@ -61,6 +74,7 @@ func _setup_default_cell_visuals(cell: GridCell) -> void:
 	highlight.size = Vector2(Constants.GRID_CELL_SIZE, Constants.GRID_CELL_SIZE)
 	highlight.color = Color.TRANSPARENT
 	highlight.visible = false
+	highlight.z_index = 1
 	cell.add_child(highlight)
 
 	# Add input detection
